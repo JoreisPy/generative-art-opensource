@@ -102,3 +102,9 @@ dist
 
 # TernJS port file
 .tern-port
+
+input/1-backgrounds
+input/2-iris
+input/3-eyeLineWork
+input/4-logos
+input/5-acessories

@@ -1,168 +1,283 @@
-/**************************************************************
- * UTILITY FUNCTIONS
- * - scroll to BEGIN CONFIG to provide the config values
- *************************************************************/
 const fs = require("fs");
+const width = 5100;
+const height = 3300;
 const dir = __dirname;
-
-// adds a rarity to the configuration. This is expected to correspond with a directory containing the rarity for each defined layer
-// @param _id - id of the rarity
-// @param _from - number in the edition to start this rarity from
-// @param _to - number in the edition to generate this rarity to
-// @return a rarity object used to dynamically generate the NFTs
-const addRarity = (_id, _from, _to) => {
-  const _rarityWeight = {
-    value: _id,
-    from: _from,
-    to: _to,
-    layerPercent: {}
-  };
-  return _rarityWeight;
-};
-
-// get the name without last 4 characters -> slice .png from the name
-const cleanName = (_str) => {
-  let name = _str.slice(0, -4);
-  return name;
-};
-
-// reads the filenames of a given folder and returns it with its name and path
-const getElements = (_path, _elementCount) => {
-  return fs
-    .readdirSync(_path)
-    .filter((item) => !/(^|\/)\.[^\/\.]/g.test(item))
-    .map((i) => {
-      return {
-        id: _elementCount,
-        name: cleanName(i),
-        path: `${_path}/${i}`
-      };
-    });
-};
-
-// adds a layer to the configuration. The layer will hold information on all the defined parts and 
-// where they should be rendered in the image
-// @param _id - id of the layer
-// @param _position - on which x/y value to render this part
-// @param _size - of the image
-// @return a layer object used to dynamically generate the NFTs
-const addLayer = (_id, _position, _size) => {
-  if (!_id) {
-    console.log('error adding layer, parameters id required');
-    return null;
-  }
-  if (!_position) {
-    _position = { x: 0, y: 0 };
-  }
-  if (!_size) {
-    _size = { width: width, height: height }
-  }
-  // add two different dimension for elements:
-  // - all elements with their path information
-  // - only the ids mapped to their rarity
-  let elements = [];
-  let elementCount = 0;
-  let elementIdsForRarity = {};
-  rarityWeights.forEach((rarityWeight) => {
-    let elementsForRarity = getElements(`${dir}/${_id}/${rarityWeight.value}`);
-
-    elementIdsForRarity[rarityWeight.value] = [];
-    elementsForRarity.forEach((_elementForRarity) => {
-      _elementForRarity.id = `${editionDnaPrefix}${elementCount}`;
-      elements.push(_elementForRarity);
-      elementIdsForRarity[rarityWeight.value].push(_elementForRarity.id);
-      elementCount++;
-    })
-    elements[rarityWeight.value] = elementsForRarity;
-  });
-
-  let elementsForLayer = {
-    id: _id,
-    position: _position,
-    size: _size,
-    elements,
-    elementIdsForRarity
-  };
-  return elementsForLayer;
-};
-
-// adds layer-specific percentages to use one vs another rarity
-// @param _rarityId - the id of the rarity to specifiy
-// @param _layerId - the id of the layer to specifiy
-// @param _percentages - an object defining the rarities and the percentage with which a given rarity for this layer should be used
-const addRarityPercentForLayer = (_rarityId, _layerId, _percentages) => {
-  let _rarityFound = false;
-  rarityWeights.forEach((_rarityWeight) => {
-    if (_rarityWeight.value === _rarityId) {
-      let _percentArray = [];
-      for (let percentType in _percentages) {
-        _percentArray.push({
-          id: percentType,
-          percent: _percentages[percentType]
-        })
-      }
-      _rarityWeight.layerPercent[_layerId] = _percentArray;
-      _rarityFound = true;
-    }
-  });
-  if (!_rarityFound) {
-    console.log(`rarity ${_rarityId} not found, failed to add percentage information`);
-  }
-}
-
-/**************************************************************
- * BEGIN CONFIG
- *************************************************************/
-
-// image width in pixels
-const width = 1000;
-// image height in pixels
-const height = 1000;
-// description for NFT in metadata file
-const description = "This is an NFT made by the coolest generative code.";
-// base url to use in metadata file
-// the id of the nft will be added to this url, in the example e.g. https://hashlips/nft/1 for NFT with id 1
-const baseImageUri = "https://hashlips/nft";
-// id for edition to start from
+const description = "The MetaEyes Collection, 100 Eyes looking deeply through the Metaverse";
+const baseImageUri = "https://nft.com";
 const startEditionFrom = 1;
-// amount of NFTs to generate in edition
+const endEditionAt = 10;
 const editionSize = 10;
-// prefix to add to edition dna ids (to distinguish dna counts from different generation processes for the same collection)
-const editionDnaPrefix = 0
-
-// create required weights
-// for each weight, call 'addRarity' with the id and from which to which element this rarity should be applied
-let rarityWeights = [
-  addRarity('super_rare', 1, 1),
-  addRarity('rare', 2, 5),
-  addRarity('original', 5, 10)
+const raceWeights = [
+  {
+    value: "skull",
+    from: 1,
+    to: editionSize,
+  },
 ];
 
-// create required layers
-// for each layer, call 'addLayer' with the id and optionally the positioning and size
-// the id would be the name of the folder in your input directory, e.g. 'ball' for ./input/ball
-const layers = [
-  addLayer('ball', { x: 0, y: 0 }, { width: width, height: height }),
-  addLayer('eye color'),
-  addLayer('iris'),
-  addLayer('shine'),
-  addLayer('bottom lid'),
-  addLayer('top lid')
-];
+const races = {
+  skull: {
+    name: "Skull",
+    layers: [
+      {
+        name: "Permanent Background",
+        elements: [
+          {
+            id: 0,
+            name: "Permanent Background",
+            path: `${dir}/permanentBackground.PNG`,
+            weight: 100, //100%.
+          },
+        ],
+        position: { x: 0, y: 0 },
+        size: { width: width, height: height },
+      },
+      {
+        name: "Background",
+        elements: [
+          {
+            id: 0,
+            name: "White",
+            path: `${dir}/1-backgrounds/whiteBackground.PNG`,
+            weight: 100, //40%
+          },
+          {
+            id: 1,
+            name: "Yellow",
+            path: `${dir}/1-backgrounds/yellowBackground.PNG`,
+            weight: 60, //15%
+          },
+          {
+            id: 2,
+            name: "Green",
+            path: `${dir}/1-backgrounds/greenBackground.PNG`,
+            weight: 45, //15%
+          },
+          {
+            id: 3,
+            name: "Pink",
+            path: `${dir}/1-backgrounds/pinkBackground.PNG`,
+            weight: 30, //15%
+          },
+          {
+            id: 4,
+            name: "Red",
+            path: `${dir}/1-backgrounds/redBackground.PNG`,
+            weight: 15, //10% 
+          },
+          {
+            id: 5,
+            name: "Purple",
+            path: `${dir}/1-backgrounds/purpleBackground.PNG`,
+            weight: 5, //5% 
+          },
 
-// provide any specific percentages that are required for a given layer and rarity level
-// all provided options are used based on their percentage values to decide which layer to select from
-addRarityPercentForLayer('super_rare', 'ball', { 'super_rare': 33, 'rare': 33, 'original': 33 });
-addRarityPercentForLayer('super_rare', 'eye color', { 'super_rare': 50, 'rare': 25, 'original': 25 });
-addRarityPercentForLayer('original', 'eye color', { 'super_rare': 50, 'rare': 25, 'original': 25 });
+        ],
+        position: { x: 0, y: 0 },
+        size: { width: width, height: height },
+      },
+      {
+        name: "Iris",
+        elements: [
+          {
+            id: 0,
+            name: "No Iris Color",
+            path: `${dir}/nothing.PNG`,
+            weight: 100, //48%.
+          },
+          {
+            id: 1,
+            name: "Aqua",
+            path: `${dir}/2-iris/irisAqua.PNG`,
+            weight: 52, //10%
+          },
+          {
+            id: 2,
+            name: "Yellow",
+            path: `${dir}/2-iris/irisYellow.PNG`,
+            weight: 42, //10%
+          },
+          {
+            id: 3,
+            name: "Blue",
+            path: `${dir}/2-iris/irisBlue.PNG`,
+            weight: 32, //8%
+          },
+          {
+            id: 4,
+            name: "Green",
+            path: `${dir}/2-iris/irisGreen.PNG`,
+            weight: 24, //8%
+          },
+          {
+            id: 5,
+            name: "Pink",
+            path: `${dir}/2-iris/irisPink.PNG`,
+            weight: 16, //8%
+          },
+          {
+            id: 6,
+            name: "Purple",
+            path: `${dir}/2-iris/irisPurple.PNG`,
+            weight: 8, //4%
+          },
+          {
+            id: 7,
+            name: "Red",
+            path: `${dir}/2-iris/irisRed.PNG`,
+            weight: 4, //2%
+          },
+          {
+            id: 8,
+            name: "Sharingan",
+            path: `${dir}/2-iris/irisSharingan.PNG`,
+            weight: 2, //2%
+          },
+        ],
+        position: { x: 0, y: 0 },
+        size: { width: width, height: height },
+      },
+      {
+        name: "Eye Linework",
+        elements: [
+          {
+            id: 0,
+            name: "Regular",
+            path: `${dir}/3-eyeLineWork/eyeLineWork-regular.PNG`,
+            weight: 100, //96%
+          },
+          {
+            id: 1,
+            name: "Special 1",
+            path: `${dir}/3-eyeLineWork/eyeLineWork-special1.PNG`,
+            weight: 4, //2%
+          },
+          {
+            id: 2,
+            name: "Special 2",
+            path: `${dir}/3-eyeLineWork/eyeLineWork-special2.PNG`,
+            weight: 2, //2%
+          },
+        ],
+        position: { x: 0, y: 0 },
+        size: { width: width, height: height },
+      },
+      {
+        name: "Pupil",
+        elements: [
+          {
+            id: 0,
+            name: "No Crypto Pupil",
+            path: `${dir}/nothing.PNG`,
+            weight: 100, //68%
+          },
+          {
+            id: 1,
+            name: "Cosmos",
+            path: `${dir}/4-logos/logoCosmos.PNG`,
+            weight: 32, //8%
+          },
+          {
+            id: 2,
+            name: "Binance",
+            path: `${dir}/4-logos/logoBinance.PNG`,
+            weight: 24, //8%
+          },
+          {
+            id: 3,
+            name: "Solana",
+            path: `${dir}/4-logos/logoSolana.PNG`,
+            weight: 18, //4%
+          },
+          {
+            id: 4,
+            name: "Cake",
+            path: `${dir}/4-logos/logoCake.PNG`,
+            weight: 14, //4%
+          },
+          {
+            id: 5,
+            name: "Matic",
+            path: `${dir}/4-logos/logoMatic.PNG`,
+            weight: 10, //4%
+          },
+          {
+            id: 6,
+            name: "Cardano",
+            path: `${dir}/4-logos/logoCardano.PNG`,
+            weight: 6, //2%
+          },
+          {
+            id: 7,
+            name: "Etherium",
+            path: `${dir}/4-logos/logoEtherium.PNG`,
+            weight: 4, //2%
+          },
+          {
+            id: 8,
+            name: "Bitcoin",
+            path: `${dir}/4-logos/logoBitcoin.PNG`,
+            weight: 2, //2%
+          },
+        ],
+        position: { x: 0, y: 0 },
+        size: { width: width, height: height },
+      },
+      {
+        name: "Accessory",
+        elements: [
+          {
+            id: 0,
+            name: "No Accessory",
+            path: `${dir}/nothing.PNG`,
+            weight: 100, //80%
+          },
+          {
+            id: 1,
+            name: "Lower Pearcing",
+            path: `${dir}/5-acessories/acessoryLowerPearcing.PNG`,
+            weight: 20, //8%
+          },
+          {
+            id: 2,
+            name: "Upper Pearcing",
+            path: `${dir}/5-acessories/acessoryUpperPearcing.PNG`,
+            weight: 12, //8%
+          },
+          {
+            id: 3,
+            name: "Water Drops",
+            path: `${dir}/5-acessories/acessoryTearDrops.PNG`,
+            weight: 6, //2%
+          },
+          {
+            id: 4,
+            name: "Trident",
+            path: `${dir}/5-acessories/acessoryTrident.PNG`,
+            weight: 4, //2%
+          },
+          {
+            id: 5,
+            name: "Eherium Pearcing",
+            path: `${dir}/5-acessories/acessoryEthereumPearcing.PNG`,
+            weight: 2, //2%
+          },
+        ],
+        position: { x: 0, y: 0 },
+        size: { width: width, height: height },
+      },
+    ],
+  },
+};
 
 module.exports = {
-  layers,
   width,
   height,
   description,
   baseImageUri,
   editionSize,
   startEditionFrom,
-  rarityWeights,
+  endEditionAt,
+  races,
+  raceWeights,
 };
